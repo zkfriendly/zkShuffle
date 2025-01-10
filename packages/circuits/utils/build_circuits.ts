@@ -1,4 +1,5 @@
 import { build_circuit, calculate_checksum, parse_checksum } from "./utils";
+import "./crypto-patch";
 
 const circuit_list = [
     ["circuits/shuffle_encrypt", "shuffle_encrypt"],

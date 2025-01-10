@@ -70,22 +70,31 @@ const HOME_DIR = require('os').homedir();
 export const P0X_DIR = resolve(HOME_DIR, "./.poseidon-zkp/zkShuffle")
 export const P0X_AWS_URL = "https://p0x-labs.s3.amazonaws.com/zkShuffle/"
 export async function dnld_aws(file_name : string) {
-    fs.mkdir(resolve(HOME_DIR, "./.poseidon-zkp"), () => {})
-    fs.mkdir(P0X_DIR, () => {})
-    fs.mkdir(resolve(P0X_DIR, './wasm'), () => {})
-    fs.mkdir(resolve(P0X_DIR, './zkey'), () => {})
-    return new Promise((reslv, reject) => {
-        if (!fs.existsSync(resolve(P0X_DIR, file_name))) {
-            const file = fs.createWriteStream(resolve(P0X_DIR, file_name))
+    // Create directories recursively to avoid ENOENT errors
+    await fs.promises.mkdir(resolve(HOME_DIR, "./.poseidon-zkp"), { recursive: true });
+    await fs.promises.mkdir(P0X_DIR, { recursive: true });
+    await fs.promises.mkdir(resolve(P0X_DIR, './wasm'), { recursive: true });
+    await fs.promises.mkdir(resolve(P0X_DIR, './zkey'), { recursive: true });
+    return new Promise((resolve, reject) => {
+        const filePath = path.resolve(P0X_DIR, file_name);
+        if (!fs.existsSync(filePath)) {
+            const file = fs.createWriteStream(filePath);
             https.get(P0X_AWS_URL + file_name, (resp: { pipe: (arg0: fs.WriteStream) => void; }) => {
+                file.on("error", (err) => {
+                    fs.unlink(filePath, () => {});
+                    reject(err);
+                });
                 file.on("finish", () => {
                     file.close();
-                    reslv(0)
+                    resolve(0);
                 });
-                resp.pipe(file)
+                resp.pipe(file);
+            }).on("error", (err: Error) => {
+                fs.unlink(filePath, () => {});
+                reject(err);
             });
         } else {
-            reslv(0)
+            resolve(0);
         }
     });
 }

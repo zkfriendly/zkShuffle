@@ -37,6 +37,7 @@
     "upload": "echo 'todo'"
   },
   "dependencies": {
+    "@zk-shuffle/circuits": "^1.0.1",
     "circomlib": "^2.0.5",
     "dotenv": "^16.0.3"
   },
